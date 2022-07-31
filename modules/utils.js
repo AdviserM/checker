@@ -42,7 +42,7 @@ const dateTimeFormat = (date, fmt) => {
 
 let dirInfo = null
 /*
-*   在执行路径下面创建一个文件夹 用来放巡检相关资料 可能需要截图
+*   在执行路径下面创建一个文件夹 用来放相关资料 可能需要截图
 * */
 function mkdir() {
     if(dirInfo) return dirInfo
@@ -50,7 +50,7 @@ function mkdir() {
     let time = dateTimeFormat(new Date(), 'yyyy-MM-dd')
     const dir = path.join(EXEC_HOME, 'output',time)
     fs.ensureDirSync(dir)
-    dirInfo = {time,dir}
+    dirInfo = {dir}
     return dirInfo
 }
 

@@ -3,7 +3,7 @@ const events = require('events');
 const path = require('path');
 const {taskLimit,timeout} = require('./modules/config')
 const tasks = require('./modules/tasks')
-const {lunchChrome} = require("./modules/puppeteer");
+const {lunchChrome, destoryChrome} = require("./modules/puppeteer");
 const {sleep, mkdir, dateTimeFormat} = require("./modules/utils");
 const {outPutExcel} = require("./modules/xlsx");
 
@@ -24,9 +24,9 @@ const nameMap = {
 // 任务结束 导出excel
 eventCenter.on('finish', async () => {
     console.log('任务结束')
-    const chrome =  await lunchChrome()
-    await chrome.close()
-    // 排序
+    // 销毁所有页面
+    // await destoryChrome()
+    // 对结果排序
     resultArr.sort(({index:a}, {index:b}) => {
         if (a < b ) {     // 按某种排序标准进行比较，a 小于 b
             return -1;
@@ -47,13 +47,13 @@ eventCenter.on('finish', async () => {
         return newItem
     })
 
-    // 导出excel
+    // 导出结果excel
     console.log(resultArr)
     let {dir} = mkdir()
     let time = dateTimeFormat(new Date(), 'yyyy-MM-dd hh：mm：ss')
     let outputPath = path.join(dir,`结果-${time}.xlsx`)
     await outPutExcel(resultArr,outputPath)
-    process.exit()
+    // process.exit()
 })
 
 
@@ -61,9 +61,8 @@ async function taskWarpper(task,index) {
     const {handler, check, title, ...remain} = task
     const inner = async () => {
         try {
-            await sleep(timeout)
             console.log(`正在执行任务:${index}/${count} ${title}`)
-            // console.log(resultArr)
+            await sleep(timeout)
             let result = await handler()
             resultArr.push({...remain,title,result})
             ++current
@@ -82,6 +81,8 @@ async function taskWarpper(task,index) {
 
 (async () => {
     console.log(`共${count}个任务 任务速率限制为${taskLimit}个任务并行 任务重试间隔时间${timeout}s`)
+    const chrome = await lunchChrome()
+    console.log(`谷歌版本:${await chrome.version()} ${await chrome.userAgent()}`)
     tasks.forEach((task,index) => {
         TaskLimitControler.call(taskWarpper, task,index+1)
     })
